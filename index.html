@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Useful Mike?</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a1a;
+    color: #d4d4d4;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    overflow-x: hidden;
+}
+
+/* ── Header ── */
+.header {
+    text-align: center;
+    margin-bottom: 1.2rem;
+}
+.header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.user-count {
+    font-size: 0.85rem;
+    color: #737373;
+    margin-top: 0.3rem;
+}
+.user-count span {
+    color: #a3a3a3;
+    font-weight: 600;
+}
+
+/* ── Main battle area ── */
+.battle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    max-width: 320px;
+}
+
+/* ── Arrow buttons ── */
+.btn-arrow {
+    width: 80px;
+    height: 64px;
+    border: none;
+    border-radius: 16px;
+    font-size: 2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-arrow:active {
+    transform: scale(0.90);
+}
+.btn-up {
+    background: linear-gradient(135deg, #059669, #10b981, #34d399);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+.btn-up:active {
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+.btn-down {
+    background: linear-gradient(135deg, #dc2626, #ef4444, #f87171);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+}
+.btn-down:active {
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* ── Gauge container ── */
+.gauge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.gauge {
+    width: 72px;
+    height: 260px;
+    background: #2a2a2a;
+    border-radius: 20px;
+    border: 2px solid #3a3a3a;
+    position: relative;
+    overflow: hidden;
+}
+.gauge-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0 0 18px 18px;
+    transition: height 0.3s ease, background 0.3s ease;
+    /* gradient applied via JS based on value */
+}
+
+/* ── Percentage display ── */
+.pct-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.pct-number {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+    transition: color 0.3s ease;
+}
+.pct-sign {
+    font-size: 1.5rem;
+    font-weight: 600;
+    opacity: 0.6;
+}
+.pct-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #737373;
+    margin-top: 0.3rem;
+}
+
+/* ── Combo indicator ── */
+.combo {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 2.5rem;
+    font-weight: 900;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 100;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    transition: none;
+}
+.combo.show {
+    animation: comboPop 0.6s ease-out forwards;
+}
+@keyframes comboPop {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    60%  { opacity: 0.8; transform: translate(-50%, -50%) scale(1.0); }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(0.8); }
+}
+
+/* ── Activity feed ── */
+.feed-section {
+    width: 100%;
+    max-width: 360px;
+    margin-top: 1.5rem;
+}
+.feed-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #525252;
+    text-align: center;
+    margin-bottom: 0.6rem;
+}
+.feed {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3a #1a1a1a;
+}
+.feed::-webkit-scrollbar { width: 4px; }
+.feed::-webkit-scrollbar-track { background: #1a1a1a; }
+.feed::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 2px; }
+
+.feed-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    background: #222;
+    animation: feedIn 0.2s ease-out;
+}
+@keyframes feedIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.feed-arrow {
+    font-weight: 800;
+    font-size: 0.9rem;
+    width: 18px;
+    text-align: center;
+}
+.feed-arrow.up   { color: #34d399; }
+.feed-arrow.down { color: #f87171; }
+.feed-values {
+    color: #a3a3a3;
+    flex: 1;
+}
+.feed-combo {
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+.feed-time {
+    color: #525252;
+    font-size: 0.7rem;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* ── Connection status ── */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+.status-dot.connected    { background: #10b981; box-shadow: 0 0 6px #10b981; }
+.status-dot.disconnected { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.status-dot.connecting   { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+
+/* ── Flash effect on value change ── */
+.gauge.flash-up   { animation: flashGreen 0.2s; }
+.gauge.flash-down { animation: flashRed 0.2s; }
+@keyframes flashGreen {
+    0%, 100% { border-color: #3a3a3a; }
+    50%      { border-color: #10b981; }
+}
+@keyframes flashRed {
+    0%, 100% { border-color: #3a3a3a; }
+    50%      { border-color: #ef4444; }
+}
+
+/* ── Empty state ── */
+.feed-empty {
+    text-align: center;
+    color: #525252;
+    font-size: 0.8rem;
+    padding: 1rem;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>USEFUL MIKE?</h1>
+    <div class="user-count">
+        <span class="status-dot connecting" id="statusDot"></span>
+        <span id="userCount">0</span> watching
+    </div>
+</div>
+
+<div class="battle">
+    <button class="btn-arrow btn-up" id="btnUp">&#9650;</button>
+
+    <div class="gauge-wrap">
+        <div class="gauge" id="gauge">
+            <div class="gauge-fill" id="gaugeFill"></div>
+        </div>
+        <div class="pct-display">
+            <div>
+                <span class="pct-number" id="pctNumber">--</span><span class="pct-sign">%</span>
+            </div>
+            <div class="pct-label">useful</div>
+        </div>
+    </div>
+
+    <button class="btn-arrow btn-down" id="btnDown">&#9660;</button>
+</div>
+
+<div class="combo" id="comboText"></div>
+
+<div class="feed-section">
+    <div class="feed-header">Recent Activity</div>
+    <div class="feed" id="feed">
+        <div class="feed-empty">No activity yet</div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ── Elements ──
+    const btnUp      = document.getElementById('btnUp');
+    const btnDown    = document.getElementById('btnDown');
+    const gaugeFill  = document.getElementById('gaugeFill');
+    const gaugeEl    = document.getElementById('gauge');
+    const pctNumber  = document.getElementById('pctNumber');
+    const userCount  = document.getElementById('userCount');
+    const statusDot  = document.getElementById('statusDot');
+    const comboText  = document.getElementById('comboText');
+    const feedEl     = document.getElementById('feed');
+
+    let currentValue = 50;
+    let ws = null;
+    let reconnectDelay = 500;
+
+    // ── Color interpolation ──
+    function valueColor(v) {
+        // red(0) → orange(25) → yellow(50) → lime(75) → green(100)
+        if (v <= 25) {
+            const t = v / 25;
+            return lerpColor([220, 38, 38], [245, 158, 11], t);
+        } else if (v <= 50) {
+            const t = (v - 25) / 25;
+            return lerpColor([245, 158, 11], [234, 179, 8], t);
+        } else if (v <= 75) {
+            const t = (v - 50) / 25;
+            return lerpColor([234, 179, 8], [132, 204, 22], t);
+        } else {
+            const t = (v - 75) / 25;
+            return lerpColor([132, 204, 22], [16, 185, 129], t);
+        }
+    }
+    function lerpColor(a, b, t) {
+        return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`;
+    }
+
+    // ── Gauge update ──
+    function setGauge(value, animate) {
+        currentValue = value;
+        const pct = Math.max(0, Math.min(100, value));
+        gaugeFill.style.height = pct + '%';
+        const color = valueColor(pct);
+        gaugeFill.style.background = `linear-gradient(to top, ${valueColor(Math.max(0, pct-20))}, ${color})`;
+        pctNumber.textContent = pct;
+        pctNumber.style.color = color;
+    }
+
+    // ── Flash gauge border ──
+    function flashGauge(direction) {
+        gaugeEl.classList.remove('flash-up', 'flash-down');
+        void gaugeEl.offsetWidth; // reflow
+        gaugeEl.classList.add(direction === 'up' ? 'flash-up' : 'flash-down');
+        setTimeout(() => gaugeEl.classList.remove('flash-up', 'flash-down'), 200);
+    }
+
+    // ── Combo popup ──
+    let comboTimer = null;
+    function showCombo(combo, direction) {
+        if (combo <= 1) return;
+        comboText.textContent = 'x' + combo + '!';
+        comboText.style.color = direction === 'up' ? '#34d399' : '#f87171';
+        comboText.classList.remove('show');
+        void comboText.offsetWidth;
+        comboText.classList.add('show');
+        clearTimeout(comboTimer);
+        comboTimer = setTimeout(() => comboText.classList.remove('show'), 600);
+    }
+
+    // ── User count ──
+    function setUsers(n) {
+        userCount.textContent = n;
+    }
+
+    // ── Activity feed ──
+    function addFeedItem(item, prepend) {
+        // Remove empty state
+        const empty = feedEl.querySelector('.feed-empty');
+        if (empty) empty.remove();
+
+        const div = document.createElement('div');
+        div.className = 'feed-item';
+
+        const arrow = item.direction === 'up' ? '↑' : '↓';
+        const arrowClass = item.direction === 'up' ? 'up' : 'down';
+        const comboStr = item.combo > 1 ? `<span class="feed-combo">x${item.combo}</span>` : '';
+        const timeStr = item.timestamp ? formatTime(item.timestamp) : 'now';
+
+        div.innerHTML = `
+            <span class="feed-arrow ${arrowClass}">${arrow}</span>
+            <span class="feed-values">${item.old_value}% → ${item.new_value}%</span>
+            ${comboStr}
+            <span class="feed-time">${timeStr}</span>
+        `;
+
+        if (prepend) {
+            feedEl.prepend(div);
+        } else {
+            feedEl.appendChild(div);
+        }
+
+        // Keep max 30 visible
+        while (feedEl.children.length > 30) {
+            feedEl.lastChild.remove();
+        }
+    }
+
+    function loadFeed(items) {
+        feedEl.innerHTML = '';
+        if (!items || items.length === 0) {
+            feedEl.innerHTML = '<div class="feed-empty">No activity yet</div>';
+            return;
+        }
+        items.forEach(item => addFeedItem(item, false));
+    }
+
+    function formatTime(ts) {
+        const ago = Math.floor(Date.now() / 1000 - ts);
+        if (ago < 5) return 'now';
+        if (ago < 60) return ago + 's';
+        if (ago < 3600) return Math.floor(ago / 60) + 'm';
+        if (ago < 86400) return Math.floor(ago / 3600) + 'h';
+        return Math.floor(ago / 86400) + 'd';
+    }
+
+    // ── WebSocket ──
+    function connect() {
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(proto + '//' + location.host + '/ws');
+        statusDot.className = 'status-dot connecting';
+
+        ws.onopen = function() {
+            statusDot.className = 'status-dot connected';
+            reconnectDelay = 500;
+        };
+
+        ws.onclose = function() {
+            statusDot.className = 'status-dot disconnected';
+            ws = null;
+            setTimeout(connect, reconnectDelay);
+            reconnectDelay = Math.min(reconnectDelay * 2, 10000);
+        };
+
+        ws.onerror = function() {
+            if (ws) ws.close();
+        };
+
+        ws.onmessage = function(e) {
+            const msg = JSON.parse(e.data);
+
+            if (msg.type === 'state') {
+                setGauge(msg.value);
+                setUsers(msg.users);
+                loadFeed(msg.feed);
+            }
+            else if (msg.type === 'update') {
+                setGauge(msg.value, true);
+                setUsers(msg.users);
+                flashGauge(msg.direction);
+                showCombo(msg.combo, msg.direction);
+                addFeedItem({
+                    direction: msg.direction,
+                    old_value: msg.oldValue,
+                    new_value: msg.value,
+                    combo: msg.combo,
+                    timestamp: Date.now() / 1000,
+                }, true);
+            }
+            else if (msg.type === 'users') {
+                setUsers(msg.users);
+            }
+        };
+    }
+
+    function send(action) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ action: action }));
+        }
+    }
+
+    // ── Button events ──
+    btnUp.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        send('up');
+    });
+    btnDown.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        send('down');
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+            e.preventDefault();
+            send('up');
+        }
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            send('down');
+        }
+    });
+
+    // ── Start ──
+    setGauge(50);
+    connect();
+})();
+</script>
+</body>
+</html>
