@@ -136,7 +136,7 @@ body {
 .pct-sign {
     font-size: 2rem;
     font-weight: 600;
-    opacity: 0.7;
+    transition: color 0.3s ease;
     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 .pct-label {
@@ -202,9 +202,9 @@ body {
             <div class="gauge-fill" id="gaugeFill"></div>
             <div class="pct-display">
                 <div>
-                    <span class="pct-number" id="pctNumber">--</span><span class="pct-sign">%</span>
+                    <span class="pct-number" id="pctNumber">--</span><span class="pct-sign" id="pctSign">%</span>
                 </div>
-                <div class="pct-label">useful</div>
+                <div class="pct-label" id="pctLabel">useful</div>
             </div>
         </div>
     </div>
@@ -221,6 +221,8 @@ body {
     const gaugeFill  = document.getElementById('gaugeFill');
     const gaugeEl    = document.getElementById('gauge');
     const pctNumber  = document.getElementById('pctNumber');
+    const pctSign    = document.getElementById('pctSign');
+    const pctLabel   = document.getElementById('pctLabel');
     const userCount  = document.getElementById('userCount');
     const statusDot  = document.getElementById('statusDot');
 
@@ -250,7 +252,7 @@ body {
     }
 
     // ── Gauge update ──
-    function setGauge(value, animate) {
+    function setGauge(value) {
         currentValue = value;
         const pct = Math.max(0, Math.min(100, value));
         gaugeFill.style.height = pct + '%';
@@ -258,6 +260,15 @@ body {
         gaugeFill.style.background = `linear-gradient(to top, ${valueColor(Math.max(0, pct-20))}, ${color})`;
         pctNumber.textContent = pct;
         pctNumber.style.color = color;
+        pctSign.style.color = color;
+
+        if (pct === 0) {
+            pctLabel.textContent = 'USELESS!';
+            pctLabel.style.color = '#ef4444';
+        } else {
+            pctLabel.textContent = 'useful';
+            pctLabel.style.color = '#e5e5e5';
+        }
     }
 
     // ── Flash gauge border ──
