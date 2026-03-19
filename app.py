@@ -57,6 +57,7 @@ def set_percentage(value):
 # WebSocket state
 # ---------------------------------------------------------------------------
 clients = set()
+draining = False  # True while the "LIAR" drain is running
 
 # ---------------------------------------------------------------------------
 # Broadcast
@@ -78,6 +79,30 @@ async def broadcast_users():
     await broadcast({"type": "users", "users": len(clients)})
 
 
+async def drain_to_42():
+    """Slowly drain the meter from 100 down to 42 after a LIAR trigger."""
+    global draining
+    draining = True
+
+    # Pause at 100 so the toast has time to land
+    await asyncio.sleep(2.0)
+
+    val = get_percentage()
+    while val > 42:
+        val -= 1
+        set_percentage(val)
+        await broadcast({
+            "type": "update",
+            "value": val,
+            "direction": "down",
+            "users": len(clients),
+        })
+        await asyncio.sleep(0.06)
+
+    draining = False
+    await broadcast({"type": "drain_done", "value": 42, "users": len(clients)})
+
+
 # ---------------------------------------------------------------------------
 # HTTP handler
 # ---------------------------------------------------------------------------
@@ -93,8 +118,7 @@ def load_index():
 
 async def process_request(connection, request):
     if request.path in ("/", "/index.html"):
-        if INDEX_HTML is None:
-            load_index()
+        load_index()  # Always reload for dev
         return Response(
             200, "OK",
             Headers([
@@ -135,6 +159,10 @@ async def handler(websocket):
             if action not in ("up", "down"):
                 continue
 
+            # Block all "up" actions while draining
+            if draining and action == "up":
+                continue
+
             old_val = get_percentage()
 
             if action == "up":
@@ -151,6 +179,11 @@ async def handler(websocket):
                 "direction": action,
                 "users": len(clients),
             })
+
+            # Trigger LIAR drain when meter hits 100
+            if new_val == 100 and action == "up" and not draining:
+                await broadcast({"type": "liar", "users": len(clients)})
+                asyncio.create_task(drain_to_42())
     except Exception:
         pass
     finally:
